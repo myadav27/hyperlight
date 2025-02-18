@@ -87,7 +87,7 @@ pub(crate) static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::<32>::empty();
 
 ///cbindgen:ignore
 #[no_mangle]
-pub(crate) static mut __security_cookie: u64 = 0;
+pub(crate) static mut __SECURITY_COOKIE: u64 = 0;
 
 pub(crate) static mut P_PEB: Option<*mut HyperlightPEB> = None;
 pub static mut MIN_STACK_ADDRESS: u64 = 0;

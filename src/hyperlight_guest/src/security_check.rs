@@ -19,14 +19,14 @@ limitations under the License.
 
 use hyperlight_common::flatbuffer_wrappers::guest_error::ErrorCode::GsCheckFailed;
 
-use crate::__security_cookie;
 use crate::guest_error::set_error_and_halt;
+use crate::__SECURITY_COOKIE;
 
 ///cbindgen:ignore
 #[no_mangle]
 pub(crate) extern "C" fn __security_check_cookie(cookie: u64) {
     unsafe {
-        if __security_cookie != cookie {
+        if __SECURITY_COOKIE != cookie {
             set_error_and_halt(GsCheckFailed, "GS Check Failed");
         }
     }
