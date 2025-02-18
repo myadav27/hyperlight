@@ -27,8 +27,8 @@ use crate::guest_function_call::dispatch_function;
 use crate::guest_logger::init_logger;
 use crate::host_function_call::{outb, OutBAction};
 use crate::{
-    HEAP_ALLOCATOR, MIN_STACK_ADDRESS, OS_PAGE_SIZE, OUTB_PTR, OUTB_PTR_WITH_CONTEXT, P_PEB,
-    RUNNING_MODE, __SECURITY_COOKIE,
+    __security_cookie, HEAP_ALLOCATOR, MIN_STACK_ADDRESS, OS_PAGE_SIZE, OUTB_PTR,
+    OUTB_PTR_WITH_CONTEXT, P_PEB, RUNNING_MODE,
 };
 
 #[inline(never)]
@@ -84,7 +84,7 @@ pub extern "win64" fn entrypoint(peb_address: u64, seed: u64, ops: u64, max_log_
         unsafe {
             P_PEB = Some(peb_address as *mut HyperlightPEB);
             let peb_ptr = P_PEB.unwrap();
-            __SECURITY_COOKIE = peb_address ^ seed;
+            __security_cookie = peb_address ^ seed;
 
             let srand_seed = ((peb_address << 8 ^ seed >> 4) >> 32) as u32;
 
