@@ -83,7 +83,6 @@ jobs:
       [
         build-rust-ubuntu,
         build-rust-windows,
-        build-guest-binaries,
         benchmarks,
       ]
 
@@ -116,16 +115,6 @@ jobs:
           version=$(echo "${{ github.ref }}" | sed -E 's#refs/heads/release/v##')
           echo "HYPERLIGHT_VERSION=$version" >> $GITHUB_ENV
           echo "HYPERLIGHT_VERSION=$version"
-
-      - name: Download Guest Binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: guest-binaries-${{ env.CONFIG }}
-          path: ./downloaded-guest-binaries-${{ env.CONFIG }}
-
-      - name: Copy Guest Binaries
-        run: |
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/* ./src/tests/rust_guests/bin/${{ env.CONFIG }}/
 
       - name: Build and archive guest library + header files
         run: |
