@@ -14,42 +14,34 @@ permissions:
 jobs:
 
   build-rust-ubuntu:
-    # see https://github.com/orgs/community/discussions/26286#discussioncomment-3251208 for why we need to check the ref
     if: ${{ contains(github.ref, 'refs/heads/release/') }} ||  ${{ github.ref=='refs/heads/main' }}
     runs-on: [self-hosted, Linux, X64, "1ES.Pool=hld-kvm-amd"]
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: hyperlight-dev/ci-setup-workflow@v1.3.0
         with:
           rust-toolchain: "1.81.0"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Debug
         run: cargo build --verbose
-
       - name: Build Release
         run: cargo build --verbose --release
 
   build-rust-windows:
-    # see https://github.com/orgs/community/discussions/26286#discussioncomment-3251208 for why we need to check the ref
     if: ${{ contains(github.ref, 'refs/heads/release/') }} ||  ${{ github.ref=='refs/heads/main' }}
     runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: hyperlight-dev/ci-setup-workflow@v1.3.0
         with:
           rust-toolchain: "1.81.0"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Debug
         run: cargo build --verbose
-
       - name: Build Release
         run: cargo build --verbose --release
 
@@ -76,7 +68,6 @@ jobs:
       contents: read
 
   publish:
-    # see https://github.com/orgs/community/discussions/26286#discussioncomment-3251208 for why we need to check the ref
     if: ${{ contains(github.ref, 'refs/heads/release/') }} ||  ${{ github.ref=='refs/heads/main' }}
     runs-on: [self-hosted, Linux, X64, "1ES.Pool=hld-kvm-amd"]
     needs:
@@ -106,8 +97,7 @@ jobs:
           rust-toolchain: "1.81.0"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # HYPERLIGHT_VERSION does not include the v prefix
+
       - name: Set HYPERLIGHT_VERSION
         if: ${{ contains(github.ref, 'refs/heads/release/') }}
         id: set_hyperlight_version
@@ -125,11 +115,8 @@ jobs:
 
       - name: Copy Guest Binaries
         run: |
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/callbackguest ./src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/callbackguest.exe ./src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest.exe
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/simpleguest ./src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/simpleguest.exe ./src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest.exe
-          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/dummyguest ./src/tests/rust_guests/bin/${{ env.CONFIG }}/dummyguest
+          mkdir -p ./src/tests/rust_guests/bin/${{ env.CONFIG }}
+          cp ./downloaded-guest-binaries-${{ env.CONFIG }}/* ./src/tests/rust_guests/bin/${{ env.CONFIG }}/
 
       - name: Build and archive guest library + header files
         run: |
@@ -143,16 +130,12 @@ jobs:
 
       - name: Archive benchmarks
         run: |
-          # windows
           tar -zcvf benchmarks_Windows_hyperv_amd.tar.gz benchmarks_Windows_hyperv_amd
           tar -zcvf benchmarks_Windows_hyperv_intel.tar.gz benchmarks_Windows_hyperv_intel
-          # kvm
           tar -zcvf benchmarks_Linux_kvm_amd.tar.gz benchmarks_Linux_kvm_amd
           tar -zcvf benchmarks_Linux_kvm_intel.tar.gz benchmarks_Linux_kvm_intel
-          # mshv2
           tar -zcvf benchmarks_Linux_mshv_intel.tar.gz benchmarks_Linux_mshv_intel
           tar -zcvf benchmarks_Linux_mshv_amd.tar.gz benchmarks_Linux_mshv_amd
-          # mshv3
           tar -zcvf benchmarks_Linux_mshv3_amd.tar.gz benchmarks_Linux_mshv3_amd
           tar -zcvf benchmarks_Linux_mshv3_intel.tar.gz benchmarks_Linux_mshv3_intel
 
@@ -168,11 +151,6 @@ jobs:
         if: ${{ contains(github.ref, 'refs/heads/release/') }}
         run: |
             gh release create v${{ env.HYPERLIGHT_VERSION }} -t "Release v${{ env.HYPERLIGHT_VERSION }}" --notes-file RELEASE_NOTES.md \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest.exe \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest.exe \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/dummyguest \
             benchmarks_Windows_hyperv_amd.tar.gz \
             benchmarks_Windows_hyperv_intel.tar.gz \
             benchmarks_Linux_kvm_amd.tar.gz \
@@ -185,18 +163,13 @@ jobs:
             hyperlight-guest-c-api-windows.tar.gz \
             include.tar.gz
         env:
-            GH_TOKEN: ${{ github.token }}
-      
+          GH_TOKEN: ${{ github.token }}
+
       - name: Create prerelease
         if: ${{ github.ref=='refs/heads/main' }}
         run: |
             gh release delete dev-latest -y --cleanup-tag || true
             gh release create dev-latest -t "Latest prerelease from main branch" --notes-file RELEASE_NOTES.md --latest=false -p \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/callbackguest.exe \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/simpleguest.exe \
-            src/tests/rust_guests/bin/${{ env.CONFIG }}/dummyguest \
             benchmarks_Windows_hyperv_amd.tar.gz \
             benchmarks_Windows_hyperv_intel.tar.gz \
             benchmarks_Linux_kvm_amd.tar.gz \
@@ -209,4 +182,4 @@ jobs:
             hyperlight-guest-c-api-windows.tar.gz \
             include.tar.gz
         env:
-            GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
